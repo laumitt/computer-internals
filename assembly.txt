@@ -1,0 +1,14 @@
+add r3 r1 r5
+sub r4 r5 r1
+ort 2 r7 r2
+xor 12 r5 r3
+equ r4 r3 r8
+les r10 r4 r8
+gre r9 r3 r2
+jum 3a
+eqj r2 5f
+lej r9 1a
+grj r2 5
+rms r5 c3
+rml 2e r3
+rgs f3 r12
