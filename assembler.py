@@ -69,7 +69,6 @@ def run_tests(test_flag, code_in, debug_flag):
         code_in = open("assembly.txt", "r+")
     if debug_flag == True:
         print("received {}".format(test_flag))
-        print("reading \n" +  code_in.read())
     return code_in
 
 def read_input(code_in, line_num, assembly, debug_flag):
