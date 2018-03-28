@@ -36,7 +36,9 @@ names = {
     'rgs' : 'register store'
     # 15 doesn't exist
 }
-error = None
+com_error = None
+len_error = None
+arg_error = None
 error_exist = None
 line_num = 0
 assembly = []
@@ -50,7 +52,7 @@ debug_flag = None
 def debug(debug_flag):
     print("Debug? Y/N")
     debug = input()
-    if debug == "Y":
+    if debug == "Y" or debug == "y":
         print("Debug flags active")
         debug_flag = True
     else:
@@ -75,46 +77,47 @@ def read_input(code_in, line_num, assembly, debug_flag):
     if debug_flag == True:
         print("Append {} to assembly array line {}".format(line.split(), line_num))
 
-def translate_command(assembly, command_text, command_hex, line_num, error, names, command_name, debug_flag):
+def translate_command(assembly, command_text, command_hex, line_num, com_error, names, command_name, debug_flag):
     command_text = assembly[line_num][0]
     command_hex = operations[command_text]
     command_name = names[command_text]
     if debug_flag == True:
         print("Command: {}, assembly: {}, hex: {}".format(command_name, command_text, command_hex))
     if command_hex == None:
-        error = "Not a valid command"
-    return command_hex
+        com_error = "Not a valid command"
+    return command_hex, com_error
 
-def translate_args(assembly, command_hex, line_num, error, machine, debug_flag):
+def check_length(assembly, command_hex, line_num, len_error, debug_flag):
+    if debug_flag == True:
+        print("Checking length")
     if command_hex not in [hex(8), hex(9), hex(10), hex(11), hex(12), hex(13), hex(14)]:
         if debug_flag == True:
             print("Command not jum, eqj, lej, grj, rms, rml, rgs")
         if len(assembly[line_num]) < 4:
-            error = "Too few arguments: given {}, 4 required".format(len(assembly[line_num]))
-            return error
+            len_error = "Too few arguments: given {}, 4 required".format(len(assembly[line_num]))
         elif len(assembly[line_num]) > 4:
-            error = "Too many arguments: given {}, 4 required".format(len(assembly[line_num]))
-            return error
+            len_error = "Too many arguments: given {}, 4 required".format(len(assembly[line_num]))
     elif command_hex == hex(8):
         if debug_flag == True:
             print("Command is jum")
         if len(assembly[line_num]) != 2:
             if len(assembly[line_num]) < 2:
                 error = "Too few arguments: given {}, 2 required".format(len(assembly[line_num]))
-                return error
             elif len(assembly[line_num]) > 2:
-                error = "Too many arguments: given {}, 2 required".format(len(assembly[line_num]))
-                return error
+                len_error = "Too many arguments: given {}, 2 required".format(len(assembly[line_num]))
     elif command_hex in [hex(9), hex(10), hex(11), hex(12), hex(13), hex(14)]:
         if debug_flag == True:
             print("Command is eqj, lej, grj, rms, rml, or rgs")
         if len(assembly[line_num]) != 3:
             if len(assembly[line_num]) < 3:
-                error = "Too few arguments: given {}, 3 required".format(len(assembly[line_num]))
-                return error
+                len_error = "Too few arguments: given {}, 3 required".format(len(assembly[line_num]))
             elif len(assembly[line_num]) > 3:
-                error = "Too many arguments: given {}, 3 required".format(len(assembly[line_num]))
-                return error
+                len_error = "Too many arguments: given {}, 3 required".format(len(assembly[line_num]))
+    return len_error
+
+def translate_args(assembly, command_hex, line_num, arg_error, machine, debug_flag):
+    if debug_flag == True:
+        print("Translating arguments")
     if command_hex == hex(0): # addition
         reg_in_one = assembly[line_num][1]
         reg_in_two = assembly[line_num][2]
@@ -193,7 +196,7 @@ def translate_args(assembly, command_hex, line_num, error, machine, debug_flag):
         if debug_flag == True:
             print([command_hex, reg_one_hex, reg_two_hex, reg_out_hex])
     elif command_hex == hex(7): # nonexistent
-        error = "Invalid Command (0x7)"
+        arg_error = "Invalid Command (0x7)"
     elif command_hex == hex(8): # unconditional jump
         jump_to = assembly[line_num][1]
         if len(jump_to) == 1:
@@ -264,14 +267,20 @@ def translate_args(assembly, command_hex, line_num, error, machine, debug_flag):
         if debug_flag == True:
             print([command_hex, input_val_hex, reg_add_hex])
     elif command_hex == hex(15): # nonexistent
-        error = "Invalid Command (0x15)"
+        arg_error = "Invalid Command (0x15)"
     else:
-        error = "Undefined Command (must be between 0x0 and 0x15)"
+        arg_error = "Undefined Command (must be between 0x0 and 0x15)"
     print("--------")
+    return arg_error
 
-def display_error(line_num, error, debug_flag):
-    if error != None:
-        print("Error on line {}: {}".format(line_num, error))
+def display_error(line_num, com_error, len_error, arg_error, debug_flag):
+    if com_error != None or len_error != None or arg_error != None:
+        if com_error != None:
+            print("Command error on line {}: {}".format(line_num, com_error))
+        elif len_error != None:
+            print("Length error on line {}: {}".format(line_num, len_error))
+        elif arg_error != None:
+            print("Argument error on line {}: {}".format(line_num, arg_error))
     elif debug_flag == True:
         print("No errors")
 
@@ -281,8 +290,7 @@ def write_output(machine, code_out, debug_flag):
     if debug_flag == True:
         print("Machine Array:")
     for line_num, line in enumerate(machine):
-        if debug_flag == True:
-            print(line)
+        print(line)
         for y in line:
             out = y.split('x')[1]
             code_out.write(out)
@@ -293,22 +301,46 @@ def write_output(machine, code_out, debug_flag):
 if __name__ == "__main__":
     print("--------" + '\n' + "Initializing" + '\n' + "--------")
     debug_flag = debug(debug_flag)
+    if debug_flag == True:
+        print("debug() ran")
     code_in = run_tests(test_flag, code_in, debug_flag)
+    if debug_flag == True:
+        print("run_tests() ran")
     for line in code_in:
-        if error != None:
+        read_input(code_in, line_num, assembly, debug_flag)
+        if debug_flag == True:
+            print("read_input() ran")
+        command_hex, com_error = translate_command(assembly, command_text, command_hex, line_num, com_error, names, command_name, debug_flag)
+        if debug_flag == True:
+            print("translate_command() ran")
+            print("command_hex = {} and com_error = {}".format(command_hex, com_error))
+        len_error = check_length(assembly, command_hex, line_num, len_error, debug_flag)
+        if debug_flag == True:
+            print("check_length() ran")
+        arg_error = translate_args(assembly, command_hex, line_num, arg_error, machine, debug_flag)
+        if debug_flag == True:
+            print("translate_args() ran")
+        display_error(line_num, com_error, len_error, arg_error, debug_flag)
+        if debug_flag == True:
+            print("display_error() ran")
+        if com_error != None or len_error != None or arg_error != None:
             error_exist = True
+            if debug_flag == True:
+                print("Error exists")
             break
-        else:
-            read_input(code_in, line_num, assembly, debug_flag)
-            command_hex = translate_command(assembly, command_text, command_hex, line_num, error, names, command_name, debug_flag)
-            error = translate_args(assembly, command_hex, line_num, error, machine, debug_flag)
-            line_num +=1
-            display_error(line_num, error, debug_flag)
+        line_num +=1
+        if debug_flag == True:
+            print("line_num counted up")
     if error_exist != True:
         write_output(machine, code_out, debug_flag)
+        if debug_flag == True:
+            print("write_output() ran")
         code_out.close()
         if debug_flag == True:
+            print("code_out closed")
             code_out = open("machine.txt")
+            print("code_out reopened")
             final = code_out.read()
+            print("code_out read")
             print("--------" + '\n' + "Output" + '\n'+ final + "--------")
         print("Translation complete" + '\n' + "--------")
