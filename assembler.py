@@ -40,6 +40,7 @@ com_error = None
 len_error = None
 arg_error = None
 error_exist = None
+error = []
 line_num = 0
 assembly = []
 machine = []
@@ -63,7 +64,7 @@ def debug(debug_flag):
 def run_tests(test_flag, code_in, debug_flag):
     print("Run tests? Y/N")
     test_flag = input()
-    if test_flag == "Y":
+    if test_flag == "Y" or test_flag == "y":
         code_in = open("test_assembly.txt", "r+")
     else:
         code_in = open("assembly.txt", "r+")
@@ -76,7 +77,7 @@ def read_input(code_in, line_num, assembly, debug_flag):
     if debug_flag == True:
         print("Append {} to assembly array line {} (line 77)".format(line.split(), line_num))
 
-def translate_command(assembly, command_text, command_hex, line_num, com_error, names, command_name, error_exist, debug_flag):
+def translate_command(assembly, command_hex, line_num, com_error, names, debug_flag, error):
     command_text = assembly[line_num][0]
     command_hex = operations[command_text]
     command_name = names[command_text]
@@ -84,14 +85,13 @@ def translate_command(assembly, command_text, command_hex, line_num, com_error, 
         print("Command: {}, assembly: {}, hex: {} (line 84)".format(command_name, command_text, command_hex))
     if command_hex == None:
         com_error = "Not a valid command"
-    if com_error != None:
-        error_exist = True
-    return command_text, command_hex, command_name, com_error
+        error.append("Command error: Not a valid command")
+    return command_hex, com_error, error, error_exist
 
-def check_length(assembly, command_text, line_num, len_error, error_exist, debug_flag):
+def check_length(assembly, command_hex, line_num, len_error, error_exist, debug_flag, error):
     if debug_flag == True:
         print("Checking length (line 93)")
-    if command_text not in ['jum', 'eqj', 'lej', 'grj', 'rms', 'rml', 'rgs']:
+    if command_hex not in [hex(8), hex(9), hex(10), hex(11), hex(12), hex(13), hex(14)]:
         if debug_flag == True:
             print("Command not jum, eqj, lej, grj, rms, rml, or rgs (line 96)")
         if len(assembly[line_num]) != 4:
@@ -102,7 +102,7 @@ def check_length(assembly, command_text, line_num, len_error, error_exist, debug
             else:
                 print("No length error")
                 len_error = None
-    elif command_text == 'jum':
+    elif command_hex == hex(8):
         if debug_flag == True:
             print("Command is jum (line 107)")
         if len(assembly[line_num]) != 2:
@@ -113,7 +113,7 @@ def check_length(assembly, command_text, line_num, len_error, error_exist, debug
             else:
                 print("No length error")
                 len_error = None
-    elif command_text in ['eqj', 'lej', 'grj', 'rms', 'rml', 'rgs']:
+    elif command_hex in [hex(9), hex(10), hex(11), hex(12), hex(13), hex(14)]:
         if debug_flag == True:
             print("Command is eqj, lej, grj, rms, rml, or rgs (line 118)")
         if len(assembly[line_num]) != 3:
@@ -318,7 +318,7 @@ if __name__ == "__main__":
         read_input(code_in, line_num, assembly, debug_flag)
         if debug_flag == True:
             print("read_input() ran (line 320)")
-        command_text, command_hex, command_name, com_error = translate_command(assembly, command_text, command_hex, line_num, com_error, names, command_name, error_exist, debug_flag)
+        command_hex, com_error, error, error_exist = translate_command(assembly, command_hex, line_num, com_error, names, debug_flag, error)
         if com_error != None or len_error != None or arg_error != None:
             error_exist = True
             if debug_flag == True:
@@ -327,7 +327,7 @@ if __name__ == "__main__":
         if debug_flag == True:
             print("translate_command() ran (line 328)")
             print("command_hex = {} and com_error = {}".format(command_hex, com_error))
-        len_error = check_length(assembly, command_text, line_num, len_error, error_exist, debug_flag)
+        len_error = check_length(assembly, command_hex, line_num, len_error, error_exist, debug_flag, error)
         if com_error != None or len_error != None or arg_error != None:
             error_exist = True
             if debug_flag == True:
