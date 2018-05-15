@@ -1,0 +1,11 @@
+xor 3 r1 r12
+jum 4
+sub r9 r10 r3
+rms r10 3
+rgs ff r2
+add r3 r9 r5
+gre r0
+rml 2e r5 r1
+ort 0 r8 r3
+jmp 3
+rms r3

@@ -1,5 +1,5 @@
-code_in = open("assembly.txt", "r+")
-code_out = open("machine.txt", "r+")
+code_in = open("/Users/laumitt/Documents/Computer Internals/Code/assembly.txt", "r+")
+code_out = open("/Users/laumitt/Documents/Computer Internals/Code/machine.txt", "r+")
 operations = {
     'add' : hex(0), # addition
     'sub' : hex(1), # subtraction
@@ -62,7 +62,7 @@ def run_tests(debug_flag, code_in):
     print("Run tests? Y/N")
     test = input()
     if test == "Y" or test == "y":
-        code_in = open("test_assembly.txt", "r+")
+        code_in = open("/Users/laumitt/Documents/Computer Internals/Code/test_assembly.txt", "r+")
         if debug_flag == True:
             print("Using test code as input")
     else:
